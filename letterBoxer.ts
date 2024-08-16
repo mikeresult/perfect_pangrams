@@ -52,36 +52,39 @@ console.log(`alphabet:`, alphabet.join(''));
 const overlap = (letters: string[], b: string) =>
     letters.some(c => b.indexOf(c) >= 0);
 
-const searchNext = (start: string, letters: string[], depth: number) => {
+const searchNext = (start: string, letters: string[], chain: string[], depth: number) => {
     if (depth === 0) {
-        if (letters.length === 0) return [];
-        return null;
+        if (letters.length === 0) {
+            console.log(`found: \u001b[32;1m${chain.join(' ')}\u001b[0m`);
+            return true;
+        }
+        return false;
     }
 
-    if (!groups[start]) return null;
+    if (!groups[start]) return false;
     
     // find all words with at least one new letter
     const group = groups[start].filter(txt => overlap(letters, txt));
-    if (group.length === 0) return null;
+    if (group.length === 0) return false;
 
+    let found = false;
     for (const txt of group) {
+        if (depth === 1 && letters.length > txt.length) break;
         const newLetters = letters.filter(c => txt.indexOf(c) < 0);
-        const result: string[] = searchNext(txt[txt.length-1], newLetters, depth-1);
-        if (result) {
-            result.unshift(txt);
-            return result;
-        }
+        const result = searchNext(txt[txt.length-1], newLetters, [...chain, txt], depth-1);
+        if (result) found = true;
     }
+    return found;
 };
 
+console.log(`starting search... ${Date.now()-start}ms`);
 let found = false;
 for (let maxDepth = 1; maxDepth <= 5 && !found; maxDepth++) {
     found = false;
     for (const start of alphabet) {
-        const result = searchNext(start, validLetters, maxDepth);
+        const result = searchNext(start, validLetters, [], maxDepth);
         if (result) {
             found = true;
-            console.log(result);
         }
     }
 }
